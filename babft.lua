@@ -3,6 +3,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local VirtualUser = game:GetService("VirtualUser")
 
 local lp = Players.LocalPlayer
 local TWEEN_SPEED = 150
@@ -11,6 +12,7 @@ local HOP_INTERVAL = 3600
 local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua"
 
 repeat task.wait() until game:IsLoaded()
+repeat task.wait() until VirtualUser
 
 local positions = {
     CFrame.new(-58.5114212, 95.066906, 307.004639, -0.999982238, -0.000746380421, 0.005914988, -7.38730321e-09, 0.992132723, 0.125190616, -0.00596189313, 0.125188395, -0.99211508),
@@ -48,10 +50,9 @@ end
 logInfo("Script started")
 logInfo("Tween speed:", TWEEN_SPEED, "| Wait:", WAIT_TIME, "| Hop interval:", HOP_INTERVAL)
 
-local VirtualUser
-pcall(function() VirtualUser = game:GetService("VirtualUser") end)
+pcall(function()
+    if not VirtualUser then return end
 
-if VirtualUser then
     lp.Idled:Connect(function()
         logDebug("Anti-AFK triggered (Idled)")
         VirtualUser:CaptureController()
@@ -69,9 +70,7 @@ if VirtualUser then
         end
     end)
     logInfo("Anti-AFK enabled (VirtualUser)")
-else
-    logWarn("VirtualUser not available, anti-AFK disabled")
-end
+end)
 
 pcall(function()
     if queue_on_teleport and SCRIPT_URL ~= "" then
