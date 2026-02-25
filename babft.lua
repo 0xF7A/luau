@@ -5,12 +5,12 @@ local HttpService    = game:GetService("HttpService")
 local VirtualUser    = game:GetService("VirtualUser")
 
 local CONFIG = {
-    TWEEN_SPEED   = 100,
+    TWEEN_SPEED   = 75,
     WAIT_TIME     = 1,
     RESPAWN_WAIT  = 5,
     DEATH_WAIT    = 15,
     UNANCHOR_WAIT = 10,
-    HOP_INTERVAL  = 3600,
+    HOP_INTERVAL  = 1800,
     SCRIPT_URL    = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua",
     LOG_LEVEL     = 2,
 }
