@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
@@ -49,22 +48,30 @@ end
 logInfo("Script started")
 logInfo("Tween speed:", TWEEN_SPEED, "| Wait:", WAIT_TIME, "| Hop interval:", HOP_INTERVAL)
 
-lp.Idled:Connect(function()
-    logDebug("Anti-AFK triggered (Idled)")
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
+local VirtualUser
+pcall(function() VirtualUser = game:GetService("VirtualUser") end)
 
-task.spawn(function()
-    while true do
-        task.wait(60)
-        pcall(function()
-            logDebug("Anti-AFK heartbeat")
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
-    end
-end)
+if VirtualUser then
+    lp.Idled:Connect(function()
+        logDebug("Anti-AFK triggered (Idled)")
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+
+    task.spawn(function()
+        while true do
+            task.wait(60)
+            pcall(function()
+                logDebug("Anti-AFK heartbeat")
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end)
+    logInfo("Anti-AFK enabled (VirtualUser)")
+else
+    logWarn("VirtualUser not available, anti-AFK disabled")
+end
 
 pcall(function()
     if queue_on_teleport and SCRIPT_URL ~= "" then
