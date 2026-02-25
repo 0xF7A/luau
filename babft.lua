@@ -5,7 +5,7 @@ local HttpService    = game:GetService("HttpService")
 local VirtualUser    = game:GetService("VirtualUser")
 
 local CONFIG = {
-    TWEEN_SPEED   = 200,
+    TWEEN_SPEED   = 100,
     WAIT_TIME     = 1,
     RESPAWN_WAIT  = 5,
     DEATH_WAIT    = 15,
