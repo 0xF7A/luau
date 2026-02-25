@@ -9,7 +9,7 @@ local lp = Players.LocalPlayer
 local TWEEN_SPEED = 150
 local WAIT_TIME = 1
 local HOP_INTERVAL = 3600
-local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua"
+local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/luau/refs/heads/main/babft.luau"
 
 local positions = {
     CFrame.new(-58.5114212, 95.066906, 307.004639, -0.999982238, -0.000746380421, 0.005914988, -7.38730321e-09, 0.992132723, 0.125190616, -0.00596189313, 0.125188395, -0.99211508),
@@ -66,8 +66,10 @@ end)
 
 pcall(function()
     if queue_on_teleport and SCRIPT_URL ~= "" then
-        queue_on_teleport('loadstring(game:HttpGet("' .. SCRIPT_URL .. '"))()')
-        logInfo("Queued script for teleport reload:", SCRIPT_URL)
+        lp.OnTeleport:Connect(function()
+            queue_on_teleport('loadstring(game:HttpGet("' .. SCRIPT_URL .. '"))()')
+            logInfo("Queued script for teleport reload:", SCRIPT_URL)
+        end)
     else
         logWarn("No SCRIPT_URL set, queue_on_teleport skipped")
     end
