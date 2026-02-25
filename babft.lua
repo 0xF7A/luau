@@ -19,6 +19,8 @@ repeat task.wait() until game:IsLoaded()
 print("Game loaded")
 repeat task.wait() until VirtualUser
 print("VirtualUser loaded")
+repeat task.wait() until lp
+print("LocalPlayer loaded")
 repeat task.wait() until lp.Character
 print("Character loaded")
 repeat task.wait() until lp.Character:FindFirstChild("HumanoidRootPart")
