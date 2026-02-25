@@ -1,213 +1,244 @@
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local Players        = game:GetService("Players")
+local RunService     = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
+local HttpService    = game:GetService("HttpService")
+local VirtualUser    = game:GetService("VirtualUser")
 
-print("Script started")
-
-if not game:IsLoaded() then
-    print("Loaded via queue, waiting 30s...")
-    task.wait(30)
-    repeat task.wait() until game:IsLoaded()
-end
-
-local lp = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or Players.LocalPlayer
-local TWEEN_SPEED = 150
-local WAIT_TIME = 1
-local HOP_INTERVAL = 3600
-local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua"
-
-local positions = {
-    CFrame.new(-58.5114212, 95.066906, 307.004639, -0.999982238, -0.000746380421, 0.005914988, -7.38730321e-09, 0.992132723, 0.125190616, -0.00596189313, 0.125188395, -0.99211508),
-    CFrame.new(-48.6776848, 96.3841629, 8765.58594, -0.998173952, -0.00652021728, 0.0600522645, -8.03571076e-09, 0.994157255, 0.107941195, -0.0604051948, 0.10774409, -0.992341876),
-    CFrame.new(-57.0145874, -350.229797, 9494.09766, -0.999981821, -0.0019966762, 0.00568846054, -1.00978035e-08, 0.943562925, 0.331193238, -0.00602870621, 0.331187218, -0.943545818),
+local CONFIG = {
+    TWEEN_SPEED   = 150,
+    WAIT_TIME     = 1,
+    RESPAWN_WAIT  = 3,
+    DEATH_WAIT    = 15,
+    UNANCHOR_WAIT = 7,
+    HOP_INTERVAL  = 3600,
+    SCRIPT_URL    = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua",
+    LOG_LEVEL     = 2,
 }
 
-local startTime = os.clock()
-local loopCount = 0
+local POSITIONS = {
+    CFrame.new(-58.5114212,  95.066906,  307.004639,
+        -0.999982238, -0.000746380421, 0.005914988,
+        -7.38730321e-09, 0.992132723, 0.125190616,
+        -0.00596189313, 0.125188395, -0.99211508),
 
-local LOG_LEVELS = { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4 }
-local LOG_LEVEL = LOG_LEVELS.INFO
+    CFrame.new(-48.6776848,  96.3841629, 8765.58594,
+        -0.998173952, -0.00652021728, 0.0600522645,
+        -8.03571076e-09, 0.994157255, 0.107941195,
+        -0.0604051948, 0.10774409, -0.992341876),
+
+    CFrame.new(-57.0145874, -350.229797, 9494.09766,
+        -0.999981821, -0.0019966762, 0.00568846054,
+        -1.00978035e-08, 0.943562925, 0.331193238,
+        -0.00602870621, 0.331187218, -0.943545818),
+}
+
+local startTime  = os.clock()
+local loopCount  = 0
 local LOG_PREFIX = "[BABFT]"
 
-local function log(level, levelName, ...)
-    if level < LOG_LEVEL then return end
-    local t = string.format("%.1f", os.clock() - startTime)
-    local msg = ""
-    for i, v in {... } do
-        msg ..= (i > 1 and " " or "") .. tostring(v)
+local function log(level, tag, ...)
+    if level < CONFIG.LOG_LEVEL then return end
+    local parts = { LOG_PREFIX, string.format("[%.1fs]", os.clock() - startTime), "[" .. tag .. "]" }
+    for _, v in { ... } do
+        parts[#parts + 1] = tostring(v)
     end
-    print(LOG_PREFIX, "[" .. t .. "s]", "[" .. levelName .. "]", msg)
+    print(table.concat(parts, " "))
 end
 
-local function logDebug(...) log(LOG_LEVELS.DEBUG, "DBG", ...) end
-local function logInfo(...)  log(LOG_LEVELS.INFO,  "INF", ...) end
-local function logWarn(...)  log(LOG_LEVELS.WARN,  "WRN", ...) end
-local function logError(...) log(LOG_LEVELS.ERROR, "ERR", ...) end
+local logD = function(...) log(1, "DBG", ...) end
+local logI = function(...) log(2, "INF", ...) end
+local logW = function(...) log(3, "WRN", ...) end
+local logE = function(...) log(4, "ERR", ...) end
+
+if not game:IsLoaded() then
+    logI("Waiting for game to load...")
+    game.Loaded:Wait()
+end
+
+local lp = Players.LocalPlayer
+if not lp then
+    logI("Waiting for LocalPlayer...")
+    lp = Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    lp = Players.LocalPlayer
+end
+
+logI("LocalPlayer:", lp.Name)
 
 local function getRoot()
     local char = lp.Character
     return char and char:FindFirstChild("HumanoidRootPart")
 end
 
-logInfo("Script started")
-logInfo("Tween speed:", TWEEN_SPEED, "| Wait:", WAIT_TIME, "| Hop interval:", HOP_INTERVAL)
+local function getHumanoid()
+    local char = lp.Character
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
+
+local function zeroVelocity(root)
+    root.AssemblyLinearVelocity  = Vector3.zero
+    root.AssemblyAngularVelocity = Vector3.zero
+end
 
 pcall(function()
-    if not VirtualUser then return end
-
     lp.Idled:Connect(function()
-        logDebug("Anti-AFK triggered (Idled)")
+        logD("Anti-AFK: Idled fired")
         VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
+        VirtualUser:ClickButton2(Vector2.zero)
     end)
-
-    task.spawn(function()
-        while true do
-            task.wait(60)
-            pcall(function()
-                logDebug("Anti-AFK heartbeat")
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    end)
-    logInfo("Anti-AFK enabled (VirtualUser)")
+    logI("Anti-AFK enabled")
 end)
 
 pcall(function()
-    if queue_on_teleport and SCRIPT_URL ~= "" then
-        lp.OnTeleport:Connect(function()
-            queue_on_teleport('loadstring(game:HttpGet("' .. SCRIPT_URL .. '"))()')
+    if queue_on_teleport and CONFIG.SCRIPT_URL ~= "" then
+        lp.OnTeleport:Connect(function(state)
+            if state == Enum.TeleportState.Started then
+                queue_on_teleport(('loadstring(game:HttpGet(%q))()'):format(CONFIG.SCRIPT_URL))
+                logI("Queued script for teleport reload")
+            end
         end)
-        logInfo("Queued script for teleport reload:", SCRIPT_URL)
     else
-        logWarn("No SCRIPT_URL set, queue_on_teleport skipped")
+        logW("queue_on_teleport unavailable or SCRIPT_URL empty, skipping")
     end
 end)
 
 local function serverHop()
-    logInfo("Server hop initiated...")
+    logI("Server hop initiated...")
     local placeId = game.PlaceId
     local servers = {}
 
     pcall(function()
-        local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
-        local data = HttpService:JSONDecode(game:HttpGet(url))
-        for _, server in data.data do
-            if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                table.insert(servers, server.id)
+        local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(placeId)
+        local ok, result = pcall(HttpService.JSONDecode, HttpService, game:HttpGet(url))
+        if not ok or not result or not result.data then
+            logW("Failed to parse server list")
+            return
+        end
+        for _, server in result.data do
+            if server.id ~= game.JobId and server.playing < server.maxPlayers then
+                servers[#servers + 1] = server.id
             end
         end
     end)
 
-    logInfo("Found", #servers, "available servers")
+    logI("Found", #servers, "candidate servers")
+
     if #servers > 0 then
         local jobId = servers[math.random(1, #servers)]
-        logInfo("Hopping to server:", jobId)
+        logI("Hopping to:", jobId)
         TeleportService:TeleportToPlaceInstance(placeId, jobId, lp)
     else
-        logWarn("No servers found, rejoining same place")
+        logW("No candidate servers found — rejoining same place")
         TeleportService:Teleport(placeId, lp)
     end
 end
 
 task.spawn(function()
+    local hopTimer = os.clock()
     while true do
         task.wait(1)
-        local remaining = HOP_INTERVAL - (os.clock() - startTime)
+        local elapsed = os.clock() - hopTimer
+        local remaining = CONFIG.HOP_INTERVAL - elapsed
+
         if remaining <= 0 then
             serverHop()
-            startTime = os.clock()
+            hopTimer = os.clock()
         elseif remaining <= 60 then
-            logDebug("Server hop in", string.format("%.0f", remaining), "sec")
+            logD("Server hop in", math.ceil(remaining), "sec")
         end
     end
 end)
 
-local function tweenTo(cf, label)
+local function tweenTo(targetCF, label)
     local root = getRoot()
     if not root then
-        logWarn("tweenTo(" .. label .. "): no root, skipping")
+        logW("tweenTo(" .. label .. "): no HumanoidRootPart, skipping")
         return
     end
 
-    local dist = (root.Position - cf.Position).Magnitude
-    logDebug("Tweening to", label, "| dist:", string.format("%.1f", dist))
+    local dist     = (root.Position - targetCF.Position).Magnitude
+    local duration = math.max(dist / CONFIG.TWEEN_SPEED, 0.05)
+    local startCF  = root.CFrame
+    local elapsed  = 0
 
-    root.Anchored = true
-    root.Velocity = Vector3.zero
-    root.AssemblyLinearVelocity = Vector3.zero
-
-    local startCF = root.CFrame
-    local duration = math.max(dist / TWEEN_SPEED, 0.1)
-    local elapsed = 0
+    logD("Tweening to", label, "| dist:", math.round(dist), "| eta:", string.format("%.2fs", duration))
 
     while elapsed < duration do
-        local dt = RunService.RenderStepped:Wait()
+        local dt = RunService.Heartbeat:Wait()
         elapsed += dt
-        local alpha = math.clamp(elapsed / duration, 0, 1)
+
         root = getRoot()
         if not root then
-            logError("Lost root mid-tween to", label)
+            logE("Lost root mid-tween to", label)
             return
         end
+
+        local alpha = math.clamp(elapsed / duration, 0, 1)
         root.Anchored = true
-        root.Velocity = Vector3.zero
-        root.AssemblyLinearVelocity = Vector3.zero
-        root.CFrame = startCF:Lerp(cf, alpha)
-        root.Anchored = false
+        zeroVelocity(root)
+        root.CFrame = startCF:Lerp(targetCF, alpha)
     end
 
     root = getRoot()
     if root then
-        root.Anchored = true
-        root.CFrame = cf
+        root.CFrame   = targetCF
         root.Anchored = false
+        zeroVelocity(root)
     end
-    logDebug("Arrived at", label)
+
+    logD("Arrived at", label)
 end
 
-logInfo("Entering main loop")
-while task.wait() do
+logI("Entering main loop")
+
+while true do
+    task.wait()
+
     local root = getRoot()
-    if root then
-        loopCount += 1
-        logInfo("Loop #" .. loopCount, "started")
-
-        tweenTo(positions[1], "pos1")
-        task.wait(WAIT_TIME)
-
-        tweenTo(positions[2], "pos2")
-        task.wait(WAIT_TIME)
-
-        tweenTo(positions[3], "pos3")
-        task.wait(WAIT_TIME)
-
-        logInfo("Unanchoring at pos3, waiting 7s...")
-        root = getRoot()
-        if root then
-            root.Anchored = false
-            root.Velocity = Vector3.zero
-            root.AssemblyLinearVelocity = Vector3.zero
-        end
-        task.wait(7)
-
-        logInfo("Breaking joints")
-        lp.Character:BreakJoints()
-        task.wait(15)
-
-        logInfo("Teleporting back to pos1")
-        root = getRoot()
-        if root then
-            root.CFrame = positions[1]
-        end
-
-        logInfo("Loop #" .. loopCount, "completed")
-    else
-        logWarn("No character, waiting 3s for respawn...")
-        task.wait(3)
+    if not root then
+        logW("No character — waiting", CONFIG.RESPAWN_WAIT, "s for respawn...")
+        task.wait(CONFIG.RESPAWN_WAIT)
+        continue
     end
+
+    loopCount += 1
+    logI("Loop #" .. loopCount .. " started")
+
+    tweenTo(POSITIONS[1], "pos1")
+    task.wait(CONFIG.WAIT_TIME)
+
+    tweenTo(POSITIONS[2], "pos2")
+    task.wait(CONFIG.WAIT_TIME)
+
+    tweenTo(POSITIONS[3], "pos3")
+    task.wait(CONFIG.WAIT_TIME)
+
+    root = getRoot()
+    if root then
+        logI("Unanchoring at pos3, waiting", CONFIG.UNANCHOR_WAIT, "s...")
+        root.Anchored = false
+        zeroVelocity(root)
+    end
+    task.wait(CONFIG.UNANCHOR_WAIT)
+
+    local hum = getHumanoid()
+    if hum then
+        logI("Killing character via Humanoid.Health")
+        hum.Health = 0
+    else
+        logW("No Humanoid found for kill step")
+    end
+
+    logI("Waiting", CONFIG.DEATH_WAIT, "s for respawn...")
+    task.wait(CONFIG.DEATH_WAIT)
+
+    root = getRoot()
+    if root then
+        logI("Snapping back to pos1")
+        root.Anchored = true
+        root.CFrame   = POSITIONS[1]
+        root.Anchored = false
+        zeroVelocity(root)
+    end
+
+    logI("Loop #" .. loopCount .. " complete")
 end
