@@ -13,6 +13,8 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/
 
 repeat task.wait() until game:IsLoaded()
 repeat task.wait() until VirtualUser
+repeat task.wait() until lp.Character
+repeat task.wait() until lp.Character:FindFirstChild("HumanoidRootPart")
 
 local positions = {
     CFrame.new(-58.5114212, 95.066906, 307.004639, -0.999982238, -0.000746380421, 0.005914988, -7.38730321e-09, 0.992132723, 0.125190616, -0.00596189313, 0.125188395, -0.99211508),
