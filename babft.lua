@@ -91,10 +91,8 @@ end)
 pcall(function()
     if queue_on_teleport and CONFIG.SCRIPT_URL ~= "" then
         lp.OnTeleport:Connect(function(state)
-            if state == Enum.TeleportState.Started then
-                queue_on_teleport(('loadstring(game:HttpGet(%q))()'):format(CONFIG.SCRIPT_URL))
-                logI("Queued script for teleport reload")
-            end
+            queue_on_teleport(('loadstring(game:HttpGet(%q))()'):format(CONFIG.SCRIPT_URL))
+            logI("Queued script for teleport reload")
         end)
     else
         logW("queue_on_teleport unavailable or SCRIPT_URL empty, skipping")
