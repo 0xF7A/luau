@@ -86,8 +86,8 @@ pcall(function()
     if queue_on_teleport and SCRIPT_URL ~= "" then
         lp.OnTeleport:Connect(function()
             queue_on_teleport('loadstring(game:HttpGet("' .. SCRIPT_URL .. '"))()')
-            logInfo("Queued script for teleport reload:", SCRIPT_URL)
         end)
+        logInfo("Queued script for teleport reload:", SCRIPT_URL)
     else
         logWarn("No SCRIPT_URL set, queue_on_teleport skipped")
     end
