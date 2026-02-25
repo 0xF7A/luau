@@ -13,12 +13,12 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/
 
 print("Script started")
 
+task.wait(5)
+
 repeat task.wait() until game:IsLoaded()
 print("Game loaded")
 repeat task.wait() until VirtualUser
 print("VirtualUser loaded")
-repeat task.wait() until lp
-print("LocalPlayer loaded")
 repeat task.wait() until lp.Character
 print("Character loaded")
 repeat task.wait() until lp.Character:FindFirstChild("HumanoidRootPart")
