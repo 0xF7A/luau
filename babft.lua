@@ -13,7 +13,7 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/
 
 print("Script started")
 
-task.wait(5)
+task.wait(15)
 
 repeat task.wait() until game:IsLoaded()
 print("Game loaded")
