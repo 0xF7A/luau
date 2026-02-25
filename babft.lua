@@ -13,6 +13,7 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/
 
 repeat task.wait() until game:IsLoaded()
 repeat task.wait() until VirtualUser
+repeat task.wait() until lp
 repeat task.wait() until lp.Character
 repeat task.wait() until lp.Character:FindFirstChild("HumanoidRootPart")
 
