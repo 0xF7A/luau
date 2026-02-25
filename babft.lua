@@ -5,11 +5,11 @@ local HttpService    = game:GetService("HttpService")
 local VirtualUser    = game:GetService("VirtualUser")
 
 local CONFIG = {
-    TWEEN_SPEED   = 150,
+    TWEEN_SPEED   = 200,
     WAIT_TIME     = 1,
-    RESPAWN_WAIT  = 3,
+    RESPAWN_WAIT  = 5,
     DEATH_WAIT    = 15,
-    UNANCHOR_WAIT = 7,
+    UNANCHOR_WAIT = 10,
     HOP_INTERVAL  = 3600,
     SCRIPT_URL    = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/babft.lua",
     LOG_LEVEL     = 2,
@@ -228,15 +228,6 @@ while true do
 
     logI("Waiting", CONFIG.DEATH_WAIT, "s for respawn...")
     task.wait(CONFIG.DEATH_WAIT)
-
-    root = getRoot()
-    if root then
-        logI("Snapping back to pos1")
-        root.Anchored = true
-        root.CFrame   = POSITIONS[1]
-        root.Anchored = false
-        zeroVelocity(root)
-    end
 
     logI("Loop #" .. loopCount .. " complete")
 end
