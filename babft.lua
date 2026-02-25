@@ -13,18 +13,10 @@ local SCRIPT_URL = "https://raw.githubusercontent.com/0xF7A/lua/refs/heads/main/
 
 print("Script started")
 
-task.wait(15)
-
-repeat task.wait() until game:IsLoaded()
-print("Game loaded")
-repeat task.wait() until VirtualUser
-print("VirtualUser loaded")
-repeat task.wait() until lp
-print("LocalPlayer loaded")
-repeat task.wait() until lp.Character
-print("Character loaded")
-repeat task.wait() until lp.Character:FindFirstChild("HumanoidRootPart")
-print("HumanoidRootPart loaded")
+if not game:IsLoaded() then
+    print("Loaded via queue, waiting 30s...")
+    task.wait(30)
+end
 
 local positions = {
     CFrame.new(-58.5114212, 95.066906, 307.004639, -0.999982238, -0.000746380421, 0.005914988, -7.38730321e-09, 0.992132723, 0.125190616, -0.00596189313, 0.125188395, -0.99211508),
